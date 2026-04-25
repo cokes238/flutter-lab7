@@ -25,7 +25,7 @@ class SlotMachineState extends State<SlotMachine> {
   var _message = '';
   var _isSpinning = false;
   var _isMuted = false;
-  var _backgroundStarted = false;
+  // var _backgroundStarted = false;
   
   @override
   void initState() {
@@ -72,16 +72,17 @@ class SlotMachineState extends State<SlotMachine> {
   
   Future<void> _spin() async {
     if (_coins <= 0 || _isSpinning) return;
+    await SoundService.playClick();
     SoundService.playClick();
     setState(() {
       _isSpinning = true;
       _message = '';
     });
     
-    if (!_backgroundStarted) {
-      SoundService.playBackground();
-      _backgroundStarted = true;
-    }
+    // if (!_backgroundStarted) {
+    //   SoundService.playBackground();
+    //   _backgroundStarted = true;
+    // }
     
     final result1 = await _spinReel(
       totalTicks: 10,
@@ -99,25 +100,28 @@ class SlotMachineState extends State<SlotMachine> {
     );
     
     await Future.delayed(Duration(milliseconds: 300));
-    
-    setState(() {
-      _isSpinning = false;
-      if (result1 == result2 && result2 == result3) {
-        if (result1 == 'assets/images/seven.png') {
-          _coins += 10;
-          _message = 'ДЖЕКПОТ! +10 монет';
-          SoundService.playJackpot();
-        } else {
-          _coins += 3;
-          _message = 'Победа! +3 монеты';
-          SoundService.playWin();
-        }
-      } else {
-        _coins -= 1;
-        _message = 'Попробуй ещё раз -1 монета';
-        SoundService.playLose();
-      }
-    });
+    String newMessage;
+int coinsChange;
+if (result1== result2 && result2 == result3) {
+if (result1 == 'assets/images/seven.png') {
+coinsChange = 10;
+newMessage = 'ДЖЕКПОТ! +10 монет';
+await SoundService.playJackpot();
+} else {
+coinsChange = 3;
+newMessage = 'Победа! +3 монеты';
+await SoundService.playWin();
+}
+} else {
+coinsChange = -1;
+newMessage = 'Попробуй ещё раз 1 монета';
+await SoundService.playLose();
+}
+setState(() {
+_isSpinning = false;
+_coins += coinsChange;
+_message = newMessage;
+});
   } // ← Закрывающая скобка для _spin()
   
   @override
